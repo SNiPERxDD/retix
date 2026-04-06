@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bootstrap Path**: Switched RETIX setup to prefer `uv` for dependency installation and editable installs, with a pip fallback for bare Python environments.
 
 ### Fixed
-- **Legacy Skill Path**: Removed the old `.agent` skill-export path from the live codebase and tests.
+- **Legacy Skill Path**: Removed the old skill-export path from the live codebase and tests.
 - **Daemon UX**: Added explicit warnings when daemon mode is unavailable so the CLI no longer falls back silently.
 - **Config Safety**: Added safe environment parsing so malformed integer overrides do not crash the CLI on import.
 - **Daemon Memory Cleanup**: Cleared MLX and Python runtime cache after each daemon request.
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. `retix/config.py` — Added safe environment parsing.
 3. `retix/main.py` — Added daemon fallback warnings.
 4. `retix/daemon_server.py` — Added post-request cache cleanup.
-5. `retix/project_config.py` — Removed legacy `.agent` handling.
+5. `retix/project_config.py` — Removed legacy skill-export handling.
 6. `retix/skill_generator.py` — Reduced to skill template content only.
 7. `retix/path_utils.py` — Removed the legacy agent directory helper.
 8. `retix/__init__.py` — Removed the legacy skill export.
@@ -459,10 +459,10 @@ None. All v1.0.0 commands remain compatible.
   - Automatic process management and cleanup
 
 #### Skill Generation System
-- **Automatic Agent Integration**: Creates `.agent/vision-skill.md` on first run
-  - Files: `retix/skill_generator.py`
-  - Auto-generates agent-friendly documentation
-  - Idempotent `.gitignore` updates (appends `.agent/` if not present)
+- **Automatic Project Integration**: Creates `.retix/SKILL.md` on first run
+  - Files: `retix/project_config.py`
+  - Auto-generates project-friendly documentation
+  - Idempotent `.gitignore` updates for the project-local skill file
   - Read-only skill file (can be committed to repo or ignored)
 
 #### Path Resolution & Validation
@@ -501,7 +501,7 @@ None. All v1.0.0 commands remain compatible.
   - `README.md`: User guide and API reference
   - `AGENTS.md`: Development doctrine and standards
   - `PRD.md`: Product requirements
-  - `.agent/vision-skill.md`: Auto-generated agent documentation
+  - `.retix/SKILL.md`: Auto-generated project skill file
   - `CHANGELOG.md`: This file
 
 #### Project Structure
@@ -554,7 +554,7 @@ None. All v1.0.0 commands remain compatible.
 **Documentation:**
 - `README.md` - User guide
 - `CHANGELOG.md` - This file
-- `.agent/vision-skill.md` - Auto-generated agent skill file
+- `.retix/SKILL.md` - Auto-generated project skill file
 
 **Utilities:**
 - `setup.py` - Setup and diagnostics script
