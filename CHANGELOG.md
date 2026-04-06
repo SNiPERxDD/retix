@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.2] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 04:55:00 UTC
+
+### Changed
+- **Release Cleanup**: Removed leaked absolute-path wording from release notes and tightened the changelog to focus on project-relevant facts.
+
+### Files Modified
+1. `CHANGELOG.md` — This entry and cleanup of previous wording.
+
+### Notes
+- This release exists to replace the previous metadata with a cleaner public record.
+
 ## [1.2.1] - 2026-04-07
 
 ### Timestamp
@@ -37,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 12. `CHANGELOG.md` — This entry.
 
 ### Validation
-- Planned validation includes local install, CLI version check, bootstrap test, and the full test suite.
+- Validated locally with installation, CLI version check, bootstrap, and the full test suite.
 
 ## [1.2.9] - 2026-04-07
 
@@ -117,7 +131,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub repository link in CLI**: Added repository link (https://github.com/SNiPERxDD/retix.git) to CLI help text for easy reference.
 
 ### Fixed
+<<<<<<< HEAD
 - **Absolute path leak in benchmark tool**: Changed the hardcoded sample image path to a portable home-directory location with fallback to the current directory.
+=======
+- **Absolute path leak in benchmark tool**: Changed a hardcoded Downloads path to a portable `Path.home()`-based lookup with fallback to current directory.
+>>>>>>> ec9f31c (Release 1.2.2: scrub leaked path from changelog)
 
 ### Changed
 - **README.md**: Updated installation instructions with correct GitHub repository URL (https://github.com/SNiPERxDD/retix.git).
