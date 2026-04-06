@@ -3,7 +3,7 @@
 RETIX provides local vision capabilities for autonomous coding agents.
 """
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 __author__ = "Vision Team"
 __license__ = "MIT"
 

@@ -4,6 +4,7 @@ import importlib
 
 from retix.config import (
     MODEL_NAME,
+    MODEL_TYPE,
     QUANTIZATION,
     ensure_cache_dir,
     ensure_socket_dir,
@@ -13,6 +14,7 @@ from retix.config import (
 def test_model_constants():
     """Test that model constants are properly defined."""
     assert MODEL_NAME == "mlx-community/Qwen3-VL-2B-Instruct-4bit"
+    assert MODEL_TYPE == "qwen3_vl"
     assert QUANTIZATION == "4bit"
 
 

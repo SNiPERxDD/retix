@@ -18,7 +18,7 @@ def _get_env_int(key: str, default: int) -> int:
 
 # Model Configuration
 MODEL_NAME: Final[str] = "mlx-community/Qwen3-VL-2B-Instruct-4bit"
-MODEL_TYPE: Final[str] = "qwen3-vl-2b"
+MODEL_TYPE: Final[str] = "qwen3_vl"
 QUANTIZATION: Final[str] = "4bit"
 
 # Cache and Storage Paths

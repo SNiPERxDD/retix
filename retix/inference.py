@@ -28,6 +28,61 @@ mlx_vlm = None
 mx = None
 _import_error = None
 
+QWEN3_VL_REGISTRY_KEYS = ("qwen3_vl",)
+QWEN2_VL_MODULE_NAMES = ("qwen2_vl", "qwen2vl")
+QWEN2_VL_CLASS_NAMES = ("Model", "Qwen2VLModel", "Qwen2VisionModel")
+REGISTRY_ATTRIBUTE_NAMES = ("MODEL_MAPPING", "MODEL_REGISTRY", "MODEL_CLASSES")
+
+
+def _find_qwen2_fallback(models_module: Any) -> Optional[Any]:
+    """Find a Qwen2-VL fallback class or module inside mlx_vlm.models."""
+    for module_name in QWEN2_VL_MODULE_NAMES:
+        candidate_module = getattr(models_module, module_name, None)
+        if candidate_module is None:
+            continue
+
+        for class_name in QWEN2_VL_CLASS_NAMES:
+            candidate_class = getattr(candidate_module, class_name, None)
+            if candidate_class is not None:
+                return candidate_class
+
+    for class_name in QWEN2_VL_CLASS_NAMES:
+        candidate_class = getattr(models_module, class_name, None)
+        if candidate_class is not None:
+            return candidate_class
+
+    return None
+
+
+def _inject_qwen3_registry_support(models_module: Any) -> bool:
+    """Inject a Qwen3-VL registry alias when the installed MLX-VLM build lacks one."""
+    fallback_model = _find_qwen2_fallback(models_module)
+    if fallback_model is None:
+        return False
+
+    injected = False
+    for registry_name in REGISTRY_ATTRIBUTE_NAMES:
+        registry = getattr(models_module, registry_name, None)
+        if not isinstance(registry, dict):
+            continue
+
+        for registry_key in QWEN3_VL_REGISTRY_KEYS:
+            if registry_key not in registry:
+                registry[registry_key] = fallback_model
+                injected = True
+
+    if not hasattr(models_module, "qwen3_vl"):
+        fallback_module = None
+        for module_name in QWEN2_VL_MODULE_NAMES:
+            fallback_module = getattr(models_module, module_name, None)
+            if fallback_module is not None:
+                break
+
+        setattr(models_module, "qwen3_vl", fallback_module or fallback_model)
+        injected = True
+
+    return injected
+
 
 def _ensure_mlx_loaded() -> bool:
     """
@@ -45,6 +100,11 @@ def _ensure_mlx_loaded() -> bool:
     try:
         import mlx.core
         import mlx_vlm as mlx_vlm_module
+        from mlx_vlm import models as mlx_models
+
+        if _inject_qwen3_registry_support(mlx_models):
+            sys.stderr.write("[FIX] Injected qwen3_vl mapping into mlx_vlm registry\n")
+            sys.stderr.flush()
         
         mx = mlx.core
         mlx_vlm = mlx_vlm_module

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-04-06
+
+### Timestamp
+- 2026-04-06 22:47:58 UTC
+
+### Changed
+- **MLX-VLM Drift Hardening**: Pinned `mlx-vlm` to `>=0.2.5` in the package metadata and bootstrap path, switched the model type constant to `qwen3_vl`, and added runtime registry injection for missing Qwen3-VL mappings.
+- **Version Bump**: Updated the package and CLI metadata to v1.2.3.
+
+### Files Modified
+1. `pyproject.toml` — Bumped package version and tightened the MLX-VLM dependency floor.
+2. `retix/bootstrap.py` — Tightened bootstrap dependency pinning.
+3. `retix/config.py` — Updated the model type constant.
+4. `retix/inference.py` — Added Qwen3-VL registry injection fallback.
+5. `retix/main.py` — Bumped the CLI version string.
+6. `retix/__init__.py` — Bumped the package version string.
+7. `tests/test_config.py` — Added coverage for the updated model type constant.
+8. `tests/test_inference_registry.py` — Added coverage for registry injection behavior.
+9. `CHANGELOG.md` — This entry.
+
+### Validation
+- Editable install with `uv` completed successfully.
+- `retix --version` reports `1.2.3`.
+- Full test suite passed: `34 passed, 4 skipped`.
+
 ---
 
 ## [1.2.2] - 2026-04-07
@@ -131,11 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub repository link in CLI**: Added repository link (https://github.com/SNiPERxDD/retix.git) to CLI help text for easy reference.
 
 ### Fixed
-<<<<<<< HEAD
 - **Absolute path leak in benchmark tool**: Changed the hardcoded sample image path to a portable home-directory location with fallback to the current directory.
-=======
-- **Absolute path leak in benchmark tool**: Changed a hardcoded Downloads path to a portable `Path.home()`-based lookup with fallback to current directory.
->>>>>>> ec9f31c (Release 1.2.2: scrub leaked path from changelog)
 
 ### Changed
 - **README.md**: Updated installation instructions with correct GitHub repository URL (https://github.com/SNiPERxDD/retix.git).
