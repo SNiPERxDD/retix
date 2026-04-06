@@ -9,8 +9,14 @@ RETIX is a local-first vision CLI for coding agents. It analyzes screenshots, ex
 ### From PyPI (Recommended)
 
 ```bash
+# Fast install (recommended - uses Rust-based resolver)
+uv pip install retix
+
+# Or with standard pip
 pip install retix
 ```
+
+**Why `uv`?** The Rust-based resolver is 10-100x faster than pip, especially with complex dependencies like torch. Installation time: ~50 seconds vs indefinite pip hangs.
 
 ### From Source (Development)
 
@@ -142,6 +148,36 @@ The real-world suite covers:
 - code editor screenshots
 
 If fixtures are missing, tests are skipped with explicit reasons.
+
+## Troubleshooting
+
+### Installation Hangs on Torch
+
+If `pip install retix` hangs indefinitely during torch installation, use `uv` instead:
+
+```bash
+uv pip install retix
+```
+
+**Why?** The standard pip resolver gets stuck backtracking through version combinations for complex ML dependencies (torch, transformers, datasets). The Rust-based `uv` resolver handles this in ~50 seconds.
+
+If you don't have `uv` installed:
+
+```bash
+# Install uv 
+brew install uv  # macOS
+# or
+pip install uv
+```
+
+### Installation Failed Despite uv
+
+If installation still fails, try installing torch first in isolation:
+
+```bash
+uv pip install torch torchvision
+uv pip install retix
+```
 
 ## License
 
