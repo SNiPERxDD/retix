@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.7] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 03:05:00 UTC
+
+### Changed
+- **README Rewrite**: Replaced the plain README with a grounded project overview, badges, install guidance, architecture summary, command reference, testing notes, and troubleshooting.
+
+### Files Modified
+1. `README.md` — Rewritten as the primary project entry point.
+2. `CHANGELOG.md` — This entry.
+
+### Notes
+- Documentation now reflects the actual CLI structure and package behavior described in the codebase.
+
 ## [1.2.6] - 2026-04-07
 
 ### Timestamp

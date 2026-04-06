@@ -1,24 +1,40 @@
 # RETIX
 
-RETIX - The Optic Nerve for Autonomous Agents.
+[![PyPI version](https://img.shields.io/pypi/v/retix.svg)](https://pypi.org/project/retix/)
+[![Python](https://img.shields.io/pypi/pyversions/retix.svg)](https://pypi.org/project/retix/)
+[![GitHub release](https://img.shields.io/github/v/release/SNiPERxDD/retix)](https://github.com/SNiPERxDD/retix/releases)
+[![License](https://img.shields.io/github/license/SNiPERxDD/retix)](LICENSE)
 
-RETIX is a local-first vision CLI for coding agents. It analyzes screenshots, extracts visible text, and verifies visual claims with deterministic defaults suitable for engineering workflows.
+RETIX is a local-first vision CLI for agents that need to inspect screenshots, extract visible text, and verify visual claims with deterministic output. It is built around a simple idea: keep the workflow close to the codebase, keep the defaults predictable, and expose enough control for engineering use without forcing a heavier application layer.
 
-## Installation
+## What RETIX Does
 
-### From PyPI (Recommended)
+RETIX currently provides four primary capabilities:
+
+- `describe` for structured screenshot analysis
+- `ocr` for text extraction
+- `check` for YES/NO claim verification with confidence
+- `daemon` for keeping the model warm across repeated requests
+
+It also includes first-class project initialization, model management, and benchmarking commands so the CLI can be used both interactively and as part of automated workflows.
+
+## Install
+
+### Recommended: PyPI
 
 ```bash
-# Fast install (recommended - uses Rust-based resolver)
 uv pip install retix
+```
 
-# Or with standard pip
+If you prefer standard pip, this also works:
+
+```bash
 pip install retix
 ```
 
-**Why `uv`?** The Rust-based resolver is 10-100x faster than pip, especially with complex dependencies like torch. Installation time: ~50 seconds vs indefinite pip hangs.
+`uv` resolves this dependency graph much faster than pip in practice, especially because RETIX depends on ML packages such as `torch`, `torchvision`, `mlx`, and `mlx-vlm`.
 
-### From Source (Development)
+### From Source
 
 ```bash
 git clone https://github.com/SNiPERxDD/retix.git
@@ -29,19 +45,55 @@ python3 -m pip install -e .
 ## Quick Start
 
 ```bash
-retix setup                    # Bootstrap your environment
-retix describe screenshot.png  # Analyze a screenshot
-retix ocr document.png         # Extract text from image
-retix check image.png "button is visible"  # Verify visual claims
+retix setup
+retix describe screenshot.png
+retix ocr document.png
+retix check image.png "button is visible"
 ```
 
-## Core Commands
+If you run `retix` with no arguments, the CLI prints the help screen.
 
-### Describe
+## Architecture
+
+RETIX is split into a few small layers rather than one large monolith:
+
+```text
+CLI layer
+  retix/main.py
+    -> command routing, help text, project bootstrap hooks
+
+Project and config layer
+  retix/project_config.py
+  retix/config.py
+  retix/path_utils.py
+    -> .retix/ state, cache paths, environment-driven defaults
+
+Inference layer
+  retix/inference.py
+  retix/image_preprocessing.py
+  retix/guardrails.py
+    -> model loading, image downscaling, result shaping
+
+Daemon layer
+  retix/daemon_server.py
+    -> Unix socket server and client for warm inference
+
+Model and benchmarking layer
+  retix/model_management.py
+  retix/benchmarking.py
+  benchmark_tokens_resolution.py
+    -> model selection, performance profiling, resolution/token analysis
+```
+
+The design is intentionally small and testable. The CLI dispatches to focused modules instead of embedding model logic in the command handlers.
+
+## Command Reference
+
+### Screenshot Analysis
 
 ```bash
 retix describe <image>
-retix describe <image> --prompt "focus on form validation"
+retix describe <image> --prompt "focus on buttons"
 retix describe <image> --json
 ```
 
@@ -52,16 +104,14 @@ retix ocr <image>
 retix ocr <image> --json
 ```
 
-### Check
+### Claim Verification
 
 ```bash
 retix check <image> "submit button is visible"
 retix check <image> "error banner is red" --json
 ```
 
-### Setup and Configuration
-
-After installing via `pip install retix`, run the setup command:
+### Project Setup
 
 ```bash
 retix setup
@@ -69,13 +119,9 @@ retix setup --non-interactive
 retix config
 ```
 
-`retix setup` performs:
-- environment validation (macOS tooling checks)
-- virtual environment creation in `~/.cache/retix/venv` (if needed)
-- hardware-aware model tier selection (2B, 8B, MoE profile)
-- optional custom Hugging Face model repo selection with format and reachability checks
+`retix setup` validates the environment, creates the local cache virtual environment under `~/.cache/retix/venv` when needed, and selects a model tier based on the machine.
 
-`retix config` initializes project context in `.retix/` and updates `.gitignore` with RETIX-specific ignore entries.
+`retix config` creates the project context in `.retix/` and keeps the repository ignore rules aligned with RETIX artifacts.
 
 ### Model Management
 
@@ -93,7 +139,7 @@ retix model switch moe
 retix bench
 ```
 
-### Daemon Mode
+### Daemon
 
 ```bash
 retix daemon start
@@ -101,15 +147,11 @@ retix daemon status
 retix daemon stop
 ```
 
-`retix daemon stop` performs deterministic shutdown:
-- sends `SIGTERM`
-- waits for graceful exit
-- escalates to `SIGKILL` on timeout
-- removes stale PID/socket files
+`retix daemon stop` sends `SIGTERM`, waits for graceful shutdown, escalates to `SIGKILL` if necessary, and removes stale PID/socket files.
 
-## Project Context
+## Project Files
 
-RETIX project context is stored in:
+RETIX keeps project-local state in:
 
 ```text
 .retix/
@@ -117,66 +159,55 @@ RETIX project context is stored in:
   config.yaml
 ```
 
-The generated skill file uses a strict metadata header:
-- `ID`
-- `Name`
-- `Version`
+The generated skill file is designed for agent integration and uses a minimal metadata header with `ID`, `Name`, and `Version`.
 
-## Security and Hygiene
+## Performance Notes
 
-- Unix daemon socket permissions are set to `600`.
-- Stale sockets are cleaned up when daemon responsiveness checks fail.
-- Local project context and archive artifacts are ignored through `.gitignore`.
+RETIX includes two built-in optimizations that matter in practice:
+
+- High-resolution images are automatically downscaled before inference when needed.
+- The CLI uses task-specific token limits rather than one fixed ceiling for every command.
+
+The repository also includes `benchmark_tokens_resolution.py` for comparing token budgets and image resolutions.
 
 ## Testing
-
-### Unit and Integration Tests
 
 ```bash
 pytest tests
 ```
 
-### Real-World Screenshot Suite
+For the real-world image suite:
 
 ```bash
 RETIX_RUN_REAL_WORLD=1 pytest tests/real_world -m real_world
 ```
 
-The real-world suite covers:
-- login screenshots
-- dashboard screenshots
-- code editor screenshots
-
-If fixtures are missing, tests are skipped with explicit reasons.
-
 ## Troubleshooting
 
-### Installation Hangs on Torch
+### Torch Installation Feels Stuck
 
-If `pip install retix` hangs indefinitely during torch installation, use `uv` instead:
+If `pip install retix` appears to hang while resolving `torch`, use `uv`:
 
 ```bash
 uv pip install retix
 ```
 
-**Why?** The standard pip resolver gets stuck backtracking through version combinations for complex ML dependencies (torch, transformers, datasets). The Rust-based `uv` resolver handles this in ~50 seconds.
+In practice, `uv` resolves and installs RETIX far faster than pip for this dependency set.
 
-If you don't have `uv` installed:
+If `uv` is not installed:
 
 ```bash
-# Install uv 
-brew install uv  # macOS
-# or
-pip install uv
+brew install uv
 ```
 
-### Installation Failed Despite uv
+### Need a Known-Good Install Path
 
-If installation still fails, try installing torch first in isolation:
+If you want to avoid the resolver entirely, install the project from source:
 
 ```bash
-uv pip install torch torchvision
-uv pip install retix
+git clone https://github.com/SNiPERxDD/retix.git
+cd retix
+python3 -m pip install -e .
 ```
 
 ## License
