@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.8] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 03:20:00 UTC
+
+### Changed
+- **Architecture Diagram**: Replaced the prose architecture section in the README with a Mermaid flowchart that shows the CLI, project context, inference, daemon, model management, and benchmarking paths.
+
+### Files Modified
+1. `README.md` — Added Mermaid architecture flow diagram and supporting explanation.
+2. `CHANGELOG.md` — This entry.
+
+### Notes
+- The diagram mirrors the actual module boundaries in the codebase and is renderable on GitHub.
+
 ## [1.2.7] - 2026-04-07
 
 ### Timestamp

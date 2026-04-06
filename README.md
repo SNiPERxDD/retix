@@ -55,37 +55,38 @@ If you run `retix` with no arguments, the CLI prints the help screen.
 
 ## Architecture
 
-RETIX is split into a few small layers rather than one large monolith:
+RETIX keeps the control flow simple: the CLI routes requests, the project layer resolves local state, inference runs through the model stack, and the daemon path keeps the model warm for repeated requests.
 
-```text
-CLI layer
-  retix/main.py
-    -> command routing, help text, project bootstrap hooks
+```mermaid
+flowchart TD
+    U[User / Agent] --> C[retix CLI\nretix/main.py]
 
-Project and config layer
-  retix/project_config.py
-  retix/config.py
-  retix/path_utils.py
-    -> .retix/ state, cache paths, environment-driven defaults
+    C --> S[Setup & Project Context\nsetup / config]
+    C --> D[Describe / OCR / Check]
+    C --> M[Model Management\nlist / info / switch]
+    C --> B[Benchmarking\nbench]
+    C --> R[Daemon Control\nstart / status / stop]
 
-Inference layer
-  retix/inference.py
-  retix/image_preprocessing.py
-  retix/guardrails.py
-    -> model loading, image downscaling, result shaping
+    S --> P[Project Files\n.retix/config.yaml\n.retix/SKILL.md]
+    S --> G[Path & Config Helpers\nretix/path_utils.py\nretix/config.py]
 
-Daemon layer
-  retix/daemon_server.py
-    -> Unix socket server and client for warm inference
+    D --> I[Inference Engine\nretix/inference.py]
+    I --> Z[Image Preprocessing\nretix/image_preprocessing.py]
+    I --> H[Guardrails & Result Types\nretix/guardrails.py]
+    I --> X[MLX-VLM Model Runtime\nmlx / mlx-vlm]
 
-Model and benchmarking layer
-  retix/model_management.py
-  retix/benchmarking.py
-  benchmark_tokens_resolution.py
-    -> model selection, performance profiling, resolution/token analysis
+    R --> T[Daemon Server\nretix/daemon_server.py]
+    T --> X
+
+    B --> Q[Resolution / Token Analysis\nbenchmark_tokens_resolution.py]
+    M --> V[Model Registry\nretix/model_management.py]
+
+    X --> O[Structured Output\ntext / OCR / YES-NO / metadata]
+    H --> O
+    O --> U
 ```
 
-The design is intentionally small and testable. The CLI dispatches to focused modules instead of embedding model logic in the command handlers.
+This layout mirrors the codebase: `retix/main.py` owns routing, `retix/project_config.py` handles project-local state, `retix/inference.py` and `retix/image_preprocessing.py` own the vision path, and `retix/daemon_server.py` provides the warm-process mode.
 
 ## Command Reference
 
