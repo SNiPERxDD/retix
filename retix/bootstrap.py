@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import sys
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib import error as url_error
@@ -66,6 +67,11 @@ def get_venv_path() -> Path:
 def get_venv_python() -> Path:
     """Return the Python executable path for the RETIX venv."""
     return get_venv_path() / "bin" / "python"
+
+
+def get_uv_executable() -> Optional[str]:
+    """Return the uv executable path when available."""
+    return shutil.which("uv")
 
 
 def get_retix_bin() -> Path:
@@ -131,36 +137,45 @@ def create_virtual_environment() -> bool:
 
 
 def install_dependencies() -> bool:
-    """Install setup dependencies into the RETIX venv."""
-    pip_path = get_venv_path() / "bin" / "pip"
+    """Install setup dependencies into the RETIX venv using uv when available."""
     console = get_console()
 
-    if not pip_path.exists():
+    uv_executable = get_uv_executable()
+    if uv_executable:
+        command = [uv_executable, "pip", "install", "--python", str(get_venv_python())]
+        command.extend(BOOTSTRAP_DEPENDENCIES)
+    else:
+        pip_path = get_venv_path() / "bin" / "pip"
+        if not pip_path.exists():
+            if console:
+                console.print("[red]FAILED[/red] pip not found in virtual environment")
+            return False
+        command = [str(pip_path), "install"]
+        command.extend(BOOTSTRAP_DEPENDENCIES)
+
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        if result.returncode != 0:
+            if console:
+                console.print("[red]FAILED[/red] dependency install")
+                if result.stderr:
+                    console.print(result.stderr)
+            return False
+    except subprocess.TimeoutExpired:
         if console:
-            console.print("[red]FAILED[/red] pip not found in virtual environment")
+            console.print("[red]FAILED[/red] dependency install timed out")
         return False
 
-    for dependency in BOOTSTRAP_DEPENDENCIES:
-        try:
-            result = subprocess.run(
-                [str(pip_path), "install", dependency],
-                capture_output=True,
-                text=True,
-                timeout=180,
-            )
-            if result.returncode != 0:
-                if console:
-                    console.print(f"[red]FAILED[/red] dependency install: {dependency}")
-                    if result.stderr:
-                        console.print(result.stderr)
-                return False
-        except subprocess.TimeoutExpired:
-            if console:
-                console.print(f"[red]FAILED[/red] dependency install timeout: {dependency}")
-            return False
-
     if console:
-        console.print("[green]OK[/green] dependencies installed in RETIX venv")
+        if uv_executable:
+            console.print("[green]OK[/green] dependencies installed in RETIX venv with uv")
+        else:
+            console.print("[green]OK[/green] dependencies installed in RETIX venv with pip")
     return True
 
 
@@ -187,15 +202,17 @@ def detect_repo_root() -> Optional[Path]:
 
 
 def install_editable_package(project_root: Path) -> bool:
-    """Run pip install -e . for global command availability."""
+    """Install RETIX in editable mode for global command availability."""
     console = get_console()
+
+    uv_executable = get_uv_executable()
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-e", str(project_root)],
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
+        if uv_executable:
+            command = [uv_executable, "pip", "install", "--python", str(get_venv_python()), "-e", str(project_root)]
+        else:
+            command = [sys.executable, "-m", "pip", "install", "-e", str(project_root)]
+
+        result = subprocess.run(command, capture_output=True, text=True, timeout=300)
         if result.returncode != 0:
             if console:
                 console.print("[red]FAILED[/red] editable install")
@@ -213,7 +230,10 @@ def install_editable_package(project_root: Path) -> bool:
         return False
 
     if console:
-        console.print("[green]OK[/green] editable install complete")
+        if uv_executable:
+            console.print("[green]OK[/green] editable install complete with uv")
+        else:
+            console.print("[green]OK[/green] editable install complete with pip")
     return True
 
 

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 04:10:00 UTC
+
+### Changed
+- **Version Bump**: Updated the package, CLI, and metadata to v1.2.1.
+- **Bootstrap Path**: Switched RETIX setup to prefer `uv` for dependency installation and editable installs, with a pip fallback for bare Python environments.
+
+### Fixed
+- **Legacy Skill Path**: Removed the old `.agent` skill-export path from the live codebase and tests.
+- **Daemon UX**: Added explicit warnings when daemon mode is unavailable so the CLI no longer falls back silently.
+- **Config Safety**: Added safe environment parsing so malformed integer overrides do not crash the CLI on import.
+- **Daemon Memory Cleanup**: Cleared MLX and Python runtime cache after each daemon request.
+
+### Files Modified
+1. `retix/bootstrap.py` — Added uv-aware installation paths.
+2. `retix/config.py` — Added safe environment parsing.
+3. `retix/main.py` — Added daemon fallback warnings.
+4. `retix/daemon_server.py` — Added post-request cache cleanup.
+5. `retix/project_config.py` — Removed legacy `.agent` handling.
+6. `retix/skill_generator.py` — Reduced to skill template content only.
+7. `retix/path_utils.py` — Removed the legacy agent directory helper.
+8. `retix/__init__.py` — Removed the legacy skill export.
+9. `pyproject.toml` — Bumped package version.
+10. `README.md` — Documented uv-aware setup behavior.
+11. `tests/` — Updated unit coverage for the cleaned API surface.
+12. `CHANGELOG.md` — This entry.
+
+### Validation
+- Planned validation includes local install, CLI version check, bootstrap test, and the full test suite.
+
 ## [1.2.9] - 2026-04-07
 
 ### Timestamp

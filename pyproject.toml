@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "retix"
-version = "1.2.0"
+version = "1.2.1"
 description = "RETIX - The Optic Nerve for Autonomous Agents"
 authors = [{ name = "Vision Team" }]
 readme = "README.md"
@@ -32,7 +32,7 @@ retix = "retix.main:cli"
 
 [tool.poetry]
 name = "retix"
-version = "1.2.0"
+version = "1.2.1"
 description = "RETIX - The Optic Nerve for Autonomous Agents"
 authors = ["Vision Team <dev@retix.local>"]
 readme = "README.md"

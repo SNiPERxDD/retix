@@ -1,4 +1,4 @@
-"""Main CLI interface for RETIX (v1.2.0).
+"""Main CLI interface for RETIX (v1.2.1).
 
 RETIX: The Optic Nerve for Autonomous Agents.
 
@@ -54,7 +54,7 @@ def log_performance(command_name: str, elapsed_seconds: float) -> None:
         )
 
 # Get version
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 
 
@@ -209,8 +209,11 @@ def describe(image: str, prompt: Optional[str], output_json: bool, daemon: bool)
                     elapsed = time.time() - command_start_time
                     log_performance("describe", elapsed)
                     return
-            except Exception:
-                pass  # Fall back to local
+            except Exception as exc:
+                sys.stderr.write(
+                    f"[WARNING] Daemon unreachable ({exc}), falling back to cold start...\n"
+                )
+                sys.stderr.flush()
         
         # Local inference
         from retix.inference import get_vision_engine
@@ -282,8 +285,11 @@ def ocr(image: str, output_json: bool, daemon: bool):
                     elapsed = time.time() - command_start_time
                     log_performance("ocr", elapsed)
                     return
-            except Exception:
-                pass
+            except Exception as exc:
+                sys.stderr.write(
+                    f"[WARNING] Daemon unreachable ({exc}), falling back to cold start...\n"
+                )
+                sys.stderr.flush()
         
         from retix.inference import get_vision_engine
         engine = get_vision_engine()
@@ -358,8 +364,11 @@ def check(image: str, claim: str, output_json: bool, daemon: bool):
                     elapsed = time.time() - command_start_time
                     log_performance("check", elapsed)
                     return
-            except Exception:
-                pass
+            except Exception as exc:
+                sys.stderr.write(
+                    f"[WARNING] Daemon unreachable ({exc}), falling back to cold start...\n"
+                )
+                sys.stderr.flush()
         
         from retix.inference import get_vision_engine
         engine = get_vision_engine()
@@ -393,7 +402,7 @@ def config():
       • config.yaml - Project settings
       • SKILL.md - Agent integration file
     
-    Updates .gitignore for .retix/ and .agent/
+    Updates .gitignore for .retix/ and core project hygiene entries
     """
     from retix.project_config import initialize_project_context
     

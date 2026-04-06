@@ -82,25 +82,6 @@ def find_project_root(start_path: Union[str, Path] = ".") -> Path:
     return Path(start_path).resolve()
 
 
-def get_project_agent_dir(project_root: Union[str, Path] = None) -> Path:
-    """
-    Get the .agent directory path for the project.
-    
-    Args:
-        project_root: Project root path. If None, searches for it.
-    
-    Returns:
-        Path to .agent directory
-    """
-    if project_root is None:
-        project_root = find_project_root()
-    else:
-        project_root = Path(project_root).resolve()
-    
-    agent_dir = project_root / ".agent"
-    return agent_dir
-
-
 def get_gitignore_path(project_root: Union[str, Path] = None) -> Path:
     """
     Get the .gitignore path for the project.

@@ -7,6 +7,15 @@ import os
 from pathlib import Path
 from typing import Final
 
+
+def _get_env_int(key: str, default: int) -> int:
+    """Read an integer environment override safely."""
+    raw_value = os.getenv(key, "")
+    try:
+        return int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        return default
+
 # Model Configuration
 MODEL_NAME: Final[str] = "mlx-community/Qwen3-VL-2B-Instruct-4bit"
 MODEL_TYPE: Final[str] = "qwen3-vl-2b"
@@ -19,9 +28,9 @@ PID_FILE: Final[Path] = SOCKET_DIR / "daemon.pid"
 SOCKET_FILE: Final[Path] = SOCKET_DIR / "daemon.sock"
 
 # Performance Targets (tweakable via environment variables - based on benchmark: 320x640@512tokens = ~4-5s, 320x480@256tokens = ~2-3s)
-LATENCY_TARGET_MS: Final[int] = int(os.getenv("RETIX_LATENCY_TARGET_MS", "3000"))  # Target: 3s for describe command (cold start, tweakable)
-LATENCY_WARN_MS: Final[int] = int(os.getenv("RETIX_LATENCY_WARN_MS", "5000"))      # Warn if exceeds 5s (indicates resolution issue, tweakable)
-LATENCY_WARM_MS: Final[int] = int(os.getenv("RETIX_LATENCY_WARM_MS", "1000"))      # Warm/daemon target: 1s (tweakable)
+LATENCY_TARGET_MS: Final[int] = _get_env_int("RETIX_LATENCY_TARGET_MS", 3000)  # Target: 3s for describe command (cold start, tweakable)
+LATENCY_WARN_MS: Final[int] = _get_env_int("RETIX_LATENCY_WARN_MS", 5000)      # Warn if exceeds 5s (indicates resolution issue, tweakable)
+LATENCY_WARM_MS: Final[int] = _get_env_int("RETIX_LATENCY_WARM_MS", 1000)      # Warm/daemon target: 1s (tweakable)
 MEMORY_LIMIT_GB: Final[float] = 3.0
 
 # Tool Behavior
@@ -38,18 +47,18 @@ VERIFY_PROMPT_TEMPLATE: Final[str] = "Verify if the following is true about this
 
 # Temperature and Sampling
 DEFAULT_TEMPERATURE: Final[float] = 0.0  # Deterministic for grounded results
-MAX_TOKENS: Final[int] = int(os.getenv("RETIX_MAX_TOKENS", "512"))  # Tweakable: Pareto optimal, 256-512 for balance
+MAX_TOKENS: Final[int] = _get_env_int("RETIX_MAX_TOKENS", 512)  # Tweakable: Pareto optimal, 256-512 for balance
 
 # Image Resolution Auto-Scaling (Pareto optimized, tweakable via environment variables)
-MAX_IMAGE_WIDTH: Final[int] = int(os.getenv("RETIX_MAX_IMAGE_WIDTH", "640"))  # Tweakable
-MAX_IMAGE_HEIGHT: Final[int] = int(os.getenv("RETIX_MAX_IMAGE_HEIGHT", "480"))  # Tweakable
-MAX_IMAGE_PIXELS: Final[int] = int(os.getenv("RETIX_MAX_IMAGE_PIXELS", "307200"))  # 640x480 default cap, tweakable
+MAX_IMAGE_WIDTH: Final[int] = _get_env_int("RETIX_MAX_IMAGE_WIDTH", 640)  # Tweakable
+MAX_IMAGE_HEIGHT: Final[int] = _get_env_int("RETIX_MAX_IMAGE_HEIGHT", 480)  # Tweakable
+MAX_IMAGE_PIXELS: Final[int] = _get_env_int("RETIX_MAX_IMAGE_PIXELS", 307200)  # 640x480 default cap, tweakable
 
 # Task-specific token limits (tweakable via environment variables)
 TASK_TOKEN_LIMITS: Final[dict] = {
-    "describe": int(os.getenv("RETIX_TOKEN_DESCRIBE", "512")),      # Tweakable
-    "ocr": int(os.getenv("RETIX_TOKEN_OCR", "256")),                # Tweakable
-    "verify": int(os.getenv("RETIX_TOKEN_VERIFY", "10")),           # Tweakable
+    "describe": _get_env_int("RETIX_TOKEN_DESCRIBE", 512),      # Tweakable
+    "ocr": _get_env_int("RETIX_TOKEN_OCR", 256),                # Tweakable
+    "verify": _get_env_int("RETIX_TOKEN_VERIFY", 10),           # Tweakable
 }
 
 # Confidence Thresholds

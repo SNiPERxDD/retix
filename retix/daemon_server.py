@@ -113,6 +113,20 @@ class DaemonServer:
             connection.sendall(json.dumps({"error": str(e)}).encode("utf-8"))
         finally:
             connection.close()
+            self._clear_runtime_cache()
+
+    def _clear_runtime_cache(self) -> None:
+        """Release MLX and Python-managed memory after each request."""
+        try:
+            import mlx.core as mx
+
+            metal_backend = getattr(mx, "metal", None)
+            if metal_backend is not None and hasattr(metal_backend, "clear_cache"):
+                metal_backend.clear_cache()
+        except Exception:
+            pass
+
+        gc.collect()
     
     def _process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """

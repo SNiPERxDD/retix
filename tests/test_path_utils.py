@@ -10,7 +10,6 @@ import os
 from retix.path_utils import (
     resolve_image_path,
     find_project_root,
-    get_project_agent_dir,
     get_gitignore_path,
 )
 
@@ -76,13 +75,6 @@ def test_find_project_root_with_git():
         # Find root should return tmpdir
         root = find_project_root(tmpdir)
         assert root == Path(tmpdir).resolve()
-
-
-def test_get_project_agent_dir():
-    """Test getting .agent directory path."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        agent_dir = get_project_agent_dir(tmpdir)
-        assert agent_dir == Path(tmpdir).resolve() / ".agent"
 
 
 def test_get_gitignore_path():

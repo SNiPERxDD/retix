@@ -198,7 +198,7 @@ def update_gitignore(project_root: Optional[Path] = None) -> bool:
         bool: True if successful or already present, False on error
     """
     gitignore_path = get_gitignore_path(project_root)
-    entries_to_add = [".retix/", ".agent/", "archive/", ".env", "venv/"]
+    entries_to_add = [".retix/", "archive/", ".env", "venv/"]
     header = "# RETIX Agent Context"
     
     try:
@@ -276,12 +276,11 @@ def initialize_project_context(project_root: Optional[Path] = None) -> bool:
         return False
     
     # Create skill file
-    from retix.skill_generator import create_skill_file
+    from retix.skill_generator import VISION_SKILL_TEMPLATE
     skill_path = retix_dir / "SKILL.md"
     if not skill_path.exists():
         try:
-            skill_content = create_skill_file()
-            skill_path.write_text(skill_content)
+            skill_path.write_text(VISION_SKILL_TEMPLATE, encoding="utf-8")
         except Exception as e:
             if console:
                 console.print(f"[yellow]⚠[/yellow] Failed to create skill file: {e}")
@@ -319,9 +318,9 @@ def ensure_project_skill_file(project_root: Optional[Path] = None) -> Optional[P
     if skill_path.exists():
         return skill_path
 
-    from retix.skill_generator import create_skill_file
+    from retix.skill_generator import VISION_SKILL_TEMPLATE
 
-    skill_path.write_text(create_skill_file(), encoding="utf-8")
+    skill_path.write_text(VISION_SKILL_TEMPLATE, encoding="utf-8")
     return skill_path
 
 

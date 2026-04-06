@@ -33,6 +33,8 @@ pip install retix
 
 `uv` resolves this dependency graph much faster than pip in practice, especially because RETIX depends on ML packages such as `torch`, `torchvision`, `mlx`, and `mlx-vlm`.
 
+`retix setup` uses `uv` automatically when it is available and falls back to the standard Python tooling path on bare environments.
+
 ### From Source
 
 ```bash
@@ -117,6 +119,8 @@ retix config
 ```
 
 `retix setup` validates the environment, creates the local cache virtual environment under `~/.cache/retix/venv` when needed, and selects a model tier based on the machine.
+
+If `uv` is installed, setup uses it for dependency installation and editable installs; otherwise it falls back to the virtual environment's built-in pip path.
 
 `retix config` creates the project context in `.retix/` and keeps the repository ignore rules aligned with RETIX artifacts.
 
