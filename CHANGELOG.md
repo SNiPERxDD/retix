@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.6] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 02:45:00 UTC
+
+### Added
+- **Installation Optimization**: Recommended `uv pip install retix` for 10-100x faster dependency resolution. PyPI installation now completes in ~50 seconds vs. pip's indefinite hangs on torch resolution.
+- **Troubleshooting Guide**: Added comprehensive installation troubleshooting section covering torch hang issues and fallback install methods.
+
+### Changed
+- **README Priority**: Updated installation instructions to promote PyPI method with uv as primary choice.
+- **Documentation**: Updated to reflect real-world installation speed (~50s with uv).
+
+### Files Modified
+1. `README.md` — Added uv installation method, torch hang workaround, and troubleshooting section.
+2. `CHANGELOG.md` — This entry.
+
+### Performance Notes
+- **Installation Time**: `uv pip install retix` ~50 seconds (vs. pip indefinite hang on backtracking)
+- **Resolver**: Rust-based resolver (uv) vs. Python resolver (pip)
+- **Dependencies**: 109 packages resolved in 3.06s by uv
+
 ## [1.2.5] - 2026-04-07
 
 ### Timestamp
