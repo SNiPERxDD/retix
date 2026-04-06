@@ -1,9 +1,7 @@
 # RETIX
 
-[![PyPI version](https://img.shields.io/pypi/v/retix.svg)](https://pypi.org/project/retix/)
-[![Python](https://img.shields.io/pypi/pyversions/retix.svg)](https://pypi.org/project/retix/)
-[![GitHub release](https://img.shields.io/github/v/release/SNiPERxDD/retix)](https://github.com/SNiPERxDD/retix/releases)
-[![License](https://img.shields.io/github/license/SNiPERxDD/retix)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/retix.svg?color=cc3f49)](https://pypi.org/project/retix/)
+[![License](https://img.shields.io/github/license/SNiPERxDD/retix.svg?color=4f4f4f)](LICENSE)
 
 RETIX is a local-first vision CLI for agents that need to inspect screenshots, extract visible text, and verify visual claims with deterministic output. It is built around a simple idea: keep the workflow close to the codebase, keep the defaults predictable, and expose enough control for engineering use without forcing a heavier application layer.
 
@@ -58,35 +56,32 @@ If you run `retix` with no arguments, the CLI prints the help screen.
 RETIX keeps the control flow simple: the CLI routes requests, the project layer resolves local state, inference runs through the model stack, and the daemon path keeps the model warm for repeated requests.
 
 ```mermaid
-flowchart TD
-    U[User / Agent] --> C[retix CLI\nretix/main.py]
+flowchart LR
+	U[User or Agent] --> C[retix CLI]
+	C --> S[setup / config]
+	C --> A[describe / ocr / check]
+	C --> M[model / bench]
+	C --> D[daemon]
 
-    C --> S[Setup & Project Context\nsetup / config]
-    C --> D[Describe / OCR / Check]
-    C --> M[Model Management\nlist / info / switch]
-    C --> B[Benchmarking\nbench]
-    C --> R[Daemon Control\nstart / status / stop]
+	S --> P[.retix\nconfig.yaml\nSKILL.md]
+	S --> H[path_utils.py\nconfig.py]
 
-    S --> P[Project Files\n.retix/config.yaml\n.retix/SKILL.md]
-    S --> G[Path & Config Helpers\nretix/path_utils.py\nretix/config.py]
+	A --> I[inference.py]
+	I --> Z[image_preprocessing.py]
+	I --> G[guardrails.py]
+	I --> L[MLX-VLM runtime]
 
-    D --> I[Inference Engine\nretix/inference.py]
-    I --> Z[Image Preprocessing\nretix/image_preprocessing.py]
-    I --> H[Guardrails & Result Types\nretix/guardrails.py]
-    I --> X[MLX-VLM Model Runtime\nmlx / mlx-vlm]
+	D --> T[daemon_server.py]
+	T --> L
 
-    R --> T[Daemon Server\nretix/daemon_server.py]
-    T --> X
+	M --> R[model_management.py]
+	M --> B[benchmarking.py\nbenchmark_tokens_resolution.py]
 
-    B --> Q[Resolution / Token Analysis\nbenchmark_tokens_resolution.py]
-    M --> V[Model Registry\nretix/model_management.py]
-
-    X --> O[Structured Output\ntext / OCR / YES-NO / metadata]
-    H --> O
-    O --> U
+	L --> O[structured output]
+	G --> O
 ```
 
-This layout mirrors the codebase: `retix/main.py` owns routing, `retix/project_config.py` handles project-local state, `retix/inference.py` and `retix/image_preprocessing.py` own the vision path, and `retix/daemon_server.py` provides the warm-process mode.
+This layout matches the codebase: `retix/main.py` owns routing, `retix/project_config.py` handles project-local state, `retix/inference.py` and `retix/image_preprocessing.py` own the vision path, and `retix/daemon_server.py` provides the warm-process mode.
 
 ## Command Reference
 

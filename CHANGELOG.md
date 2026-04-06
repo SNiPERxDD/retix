@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.9] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 03:35:00 UTC
+
+### Changed
+- **Badge Simplification**: Removed the extra blue-heavy badges from the README header and kept only the core project badges.
+- **Architecture Format**: Replaced the architecture prose with a compact Mermaid flowchart that is easier to scan in Markdown.
+
+### Files Modified
+1. `README.md` — Simplified the badge row and replaced the architecture section with Mermaid.
+2. `CHANGELOG.md` — This entry.
+
+### Notes
+- The README now stays focused on the project itself instead of badge clutter.
+
 ## [1.2.8] - 2026-04-07
 
 ### Timestamp
