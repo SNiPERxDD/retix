@@ -1,7 +1,8 @@
 # RETIX
 
-[![PyPI](https://img.shields.io/pypi/v/retix.svg?color=cc3f49)](https://pypi.org/project/retix/)
-[![License](https://img.shields.io/github/license/SNiPERxDD/retix.svg?color=4f4f4f)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/retix.svg?color=red)](https://pypi.org/project/retix/)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://pypi.org/project/retix/)
+[![License](https://img.shields.io/github/license/SNiPERxDD/retix.svg?color=green)](LICENSE)
 
 RETIX is a local-first vision CLI for agents that need to inspect screenshots, extract visible text, and verify visual claims with deterministic output. It is built around a simple idea: keep the workflow close to the codebase, keep the defaults predictable, and expose enough control for engineering use without forcing a heavier application layer.
 
