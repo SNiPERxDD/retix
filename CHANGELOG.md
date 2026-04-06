@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.5] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 02:15:00 UTC
+
+### Added
+- **Help on bare `retix` command**: Running `retix` with no arguments now displays the full help menu with command groups.
+- **GitHub repository link in CLI**: Added repository link (https://github.com/SNiPERxDD/retix.git) to CLI help text for easy reference.
+
+### Fixed
+- **Absolute path leak in benchmark tool**: Changed the hardcoded sample image path to a portable home-directory location with fallback to the current directory.
+
+### Changed
+- **README.md**: Updated installation instructions with correct GitHub repository URL (https://github.com/SNiPERxDD/retix.git).
+
+### Files Modified
+1. `retix/main.py` — Added logic to show help when no subcommand provided; added GitHub link to docstring.
+2. `benchmark_tokens_resolution.py` — Replaced absolute path with portable `Path.home()` approach.
+3. `README.md` — Updated GitHub clone URL.
+4. `CHANGELOG.md` — This entry.
+
+### Validation
+- Preflight checks passed: no code-based absolute path leaks, .gitignore complete, documentation current.
+- CLI verified to display help with GitHub link when run without arguments.
+- `git init` and initial commit created successfully.
+
 ## [1.2.4] - 2026-04-07
 
 ### Timestamp
