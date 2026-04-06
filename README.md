@@ -6,6 +6,14 @@ RETIX is a local-first vision CLI for coding agents. It analyzes screenshots, ex
 
 ## Installation
 
+### From PyPI (Recommended)
+
+```bash
+pip install retix
+```
+
+### From Source (Development)
+
 ```bash
 git clone https://github.com/SNiPERxDD/retix.git
 cd retix
@@ -15,9 +23,10 @@ python3 -m pip install -e .
 ## Quick Start
 
 ```bash
-retix setup
-retix config
-retix describe test_ui_screenshot.png
+retix setup                    # Bootstrap your environment
+retix describe screenshot.png  # Analyze a screenshot
+retix ocr document.png         # Extract text from image
+retix check image.png "button is visible"  # Verify visual claims
 ```
 
 ## Core Commands
@@ -46,6 +55,8 @@ retix check <image> "error banner is red" --json
 
 ### Setup and Configuration
 
+After installing via `pip install retix`, run the setup command:
+
 ```bash
 retix setup
 retix setup --non-interactive
@@ -54,10 +65,9 @@ retix config
 
 `retix setup` performs:
 - environment validation (macOS tooling checks)
-- virtual environment creation in `~/.cache/retix/venv`
+- virtual environment creation in `~/.cache/retix/venv` (if needed)
 - hardware-aware model tier selection (2B, 8B, MoE profile)
 - optional custom Hugging Face model repo selection with format and reachability checks
-- editable install (`pip install -e .`) for global command availability
 
 `retix config` initializes project context in `.retix/` and updates `.gitignore` with RETIX-specific ignore entries.
 
