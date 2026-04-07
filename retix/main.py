@@ -1,4 +1,4 @@
-"""Main CLI interface for RETIX (v1.2.3).
+"""Main CLI interface for RETIX (v1.2.4).
 
 RETIX: The Optic Nerve for Autonomous Agents.
 
@@ -54,7 +54,7 @@ def log_performance(command_name: str, elapsed_seconds: float) -> None:
         )
 
 # Get version
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 
 
 

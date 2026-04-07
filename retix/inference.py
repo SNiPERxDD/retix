@@ -5,6 +5,7 @@ Handles model loading, caching, and inference execution.
 
 import time
 import sys
+import importlib
 from pathlib import Path
 from typing import Optional, Tuple, Any
 import json
@@ -29,15 +30,37 @@ mx = None
 _import_error = None
 
 QWEN3_VL_REGISTRY_KEYS = ("qwen3_vl",)
-QWEN2_VL_MODULE_NAMES = ("qwen2_vl", "qwen2vl")
+QWEN3_MODEL_TYPE_KEYS = ("qwen3_vl", "qwen3-vl", "qwen3vl")
+QWEN3_MODULE_ALIASES = ("qwen3_vl",)
+QWEN2_VL_MODULE_NAMES = ("qwen2_5_vl", "qwen2_vl", "qwen2vl")
 QWEN2_VL_CLASS_NAMES = ("Model", "Qwen2VLModel", "Qwen2VisionModel")
 REGISTRY_ATTRIBUTE_NAMES = ("MODEL_MAPPING", "MODEL_REGISTRY", "MODEL_CLASSES")
+
+
+def _resolve_mlx_model_module(models_module: Any, module_name: str) -> Optional[Any]:
+    """Resolve an MLX-VLM model module from attributes or dynamic import."""
+    module_object = getattr(models_module, module_name, None)
+    if module_object is not None:
+        return module_object
+
+    try:
+        return importlib.import_module(f"mlx_vlm.models.{module_name}")
+    except Exception:
+        return None
+
+
+def _find_qwen2_fallback_module_name(models_module: Any) -> Optional[str]:
+    """Find the most compatible fallback module name for Qwen3 model types."""
+    for module_name in QWEN2_VL_MODULE_NAMES:
+        if _resolve_mlx_model_module(models_module, module_name) is not None:
+            return module_name
+    return None
 
 
 def _find_qwen2_fallback(models_module: Any) -> Optional[Any]:
     """Find a Qwen2-VL fallback class or module inside mlx_vlm.models."""
     for module_name in QWEN2_VL_MODULE_NAMES:
-        candidate_module = getattr(models_module, module_name, None)
+        candidate_module = _resolve_mlx_model_module(models_module, module_name)
         if candidate_module is None:
             continue
 
@@ -84,6 +107,38 @@ def _inject_qwen3_registry_support(models_module: Any) -> bool:
     return injected
 
 
+def _inject_qwen3_model_remapping(utils_module: Any, models_module: Any) -> bool:
+    """Inject Qwen3 model-type remapping used by mlx_vlm.utils.get_model_and_args."""
+    model_remapping = getattr(utils_module, "MODEL_REMAPPING", None)
+    if not isinstance(model_remapping, dict):
+        return False
+
+    fallback_module_name = _find_qwen2_fallback_module_name(models_module)
+    if fallback_module_name is None:
+        return False
+
+    injected = False
+    for model_type_key in QWEN3_MODEL_TYPE_KEYS:
+        if model_remapping.get(model_type_key) != fallback_module_name:
+            model_remapping[model_type_key] = fallback_module_name
+            injected = True
+
+    fallback_module_object = getattr(models_module, fallback_module_name, None)
+    if fallback_module_object is None:
+        fallback_module_object = _resolve_mlx_model_module(
+            models_module, fallback_module_name
+        )
+
+    if fallback_module_object is not None:
+        for module_alias in QWEN3_MODULE_ALIASES:
+            module_alias_key = f"mlx_vlm.models.{module_alias}"
+            if module_alias_key not in sys.modules:
+                sys.modules[module_alias_key] = fallback_module_object
+                injected = True
+
+    return injected
+
+
 def _ensure_mlx_loaded() -> bool:
     """
     Lazy-load MLX-VLM dependencies.
@@ -101,9 +156,12 @@ def _ensure_mlx_loaded() -> bool:
         import mlx.core
         import mlx_vlm as mlx_vlm_module
         from mlx_vlm import models as mlx_models
+        from mlx_vlm import utils as mlx_utils
 
-        if _inject_qwen3_registry_support(mlx_models):
-            sys.stderr.write("[FIX] Injected qwen3_vl mapping into mlx_vlm registry\n")
+        registry_injected = _inject_qwen3_registry_support(mlx_models)
+        remapping_injected = _inject_qwen3_model_remapping(mlx_utils, mlx_models)
+        if registry_injected or remapping_injected:
+            sys.stderr.write("[FIX] Injected qwen3_vl compatibility mapping into mlx_vlm\n")
             sys.stderr.flush()
         
         mx = mlx.core

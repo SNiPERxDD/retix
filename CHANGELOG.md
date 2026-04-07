@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 05:10:22 UTC
+
+### Fixed
+- **Qwen3-VL Runtime Import Failure**: Fixed `Model type qwen3_vl not supported` by injecting compatibility into `mlx_vlm.utils.MODEL_REMAPPING` and creating a runtime module alias for `mlx_vlm.models.qwen3_vl` when only Qwen2 fallback modules are present.
+
+### Changed
+- **Version Bump**: Updated package and CLI metadata to v1.2.4.
+- **Test Coverage**: Added remapping-focused tests for the runtime compatibility injection path.
+
+### Files Modified
+1. `retix/inference.py` — Added `MODEL_REMAPPING` and module-alias compatibility injection for Qwen3 model types.
+2. `tests/test_inference_registry.py` — Added tests for remapping and alias injection behavior.
+3. `pyproject.toml` — Bumped package version to 1.2.4.
+4. `retix/main.py` — Bumped CLI version string to 1.2.4.
+5. `retix/__init__.py` — Bumped package version string to 1.2.4.
+6. `CHANGELOG.md` — This entry.
+
+### Validation
+- Full test suite passed: `37 passed, 4 skipped`.
+- Editable install with `uv` completed successfully.
+- `retix --version` reports `1.2.4`.
+- `retix setup --non-interactive` completed successfully.
+- Runtime verification confirms `qwen3_vl` remaps to an available fallback architecture and imports via `mlx_vlm.models.qwen3_vl` alias.
+
 ## [1.2.3] - 2026-04-06
 
 ### Timestamp
