@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 05:43:30 UTC
+
+### Fixed
+- **CI Dependency Resolution Failure**: Removed the `numpy<2.0` upper bound so environments resolving `opencv-python` from `mlx-vlm>=0.4.4` can install successfully on clean Linux runners.
+
+### Changed
+- **Version Bump**: Updated package and CLI metadata to v1.2.6.
+- **Bootstrap Parity**: Matched bootstrap dependency constraints with package metadata by allowing NumPy 2.x.
+
+### Files Modified
+1. `pyproject.toml` — Bumped package version to 1.2.6 and relaxed NumPy constraint.
+2. `retix/bootstrap.py` — Relaxed NumPy constraint in bootstrap dependency list.
+3. `retix/main.py` — Bumped CLI version string to 1.2.6.
+4. `retix/__init__.py` — Bumped package version string to 1.2.6.
+5. `CHANGELOG.md` — This entry.
+
+### Validation
+- Full test suite passed: `42 passed, 4 skipped`.
+- Clean-environment dependency resolution succeeded with `pip install --dry-run -e .` in a fresh virtualenv.
+- External runtime verification passed in `/Users/abhinavarao/DSE/Projects/AT-SDEP`:
+  `retix --version` reports `1.2.6`, and `retix describe arena_size_200x200.png` completed successfully.
+
 ## [1.2.5] - 2026-04-07
 
 ### Timestamp
