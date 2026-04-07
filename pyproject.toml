@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "retix"
-version = "1.2.4"
+version = "1.2.5"
 description = "RETIX - The Optic Nerve for Autonomous Agents"
 authors = [{ name = "Vision Team" }]
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
     "pillow>=10.1.0",
     "numpy>=1.24.0,<2.0",
     "mlx>=0.25.0",
-    "mlx-vlm>=0.2.5",
+    "mlx-vlm>=0.4.4",
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "pydantic>=2.5.0",
@@ -32,7 +32,7 @@ retix = "retix.main:cli"
 
 [tool.poetry]
 name = "retix"
-version = "1.2.4"
+version = "1.2.5"
 description = "RETIX - The Optic Nerve for Autonomous Agents"
 authors = ["Vision Team <dev@retix.local>"]
 readme = "README.md"
@@ -50,7 +50,7 @@ rich = "^13.7.0"
 pillow = "^10.1.0"
 numpy = ">=1.24.0,<2.0"
 mlx = ">=0.25.0"
-mlx-vlm = ">=0.2.5"
+mlx-vlm = ">=0.4.4"
 torch = ">=2.0.0"
 torchvision = ">=0.15.0"
 pydantic = "^2.5.0"

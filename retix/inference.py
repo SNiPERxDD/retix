@@ -37,6 +37,52 @@ QWEN2_VL_CLASS_NAMES = ("Model", "Qwen2VLModel", "Qwen2VisionModel")
 REGISTRY_ATTRIBUTE_NAMES = ("MODEL_MAPPING", "MODEL_REGISTRY", "MODEL_CLASSES")
 
 
+def _normalize_model_type(model_type: Any) -> str:
+    """Normalize model type names for consistent compatibility checks."""
+    return str(model_type or "").strip().lower().replace("-", "_")
+
+
+def _normalize_qwen3_config_for_qwen2_fallback(
+    config: Any, fallback_model_type: str
+) -> bool:
+    """Normalize qwen3 config for qwen2 fallback model modules."""
+    if not isinstance(config, dict):
+        return False
+
+    normalized_model_type = _normalize_model_type(config.get("model_type"))
+    if normalized_model_type not in QWEN3_MODEL_TYPE_KEYS:
+        return False
+
+    normalized_fallback_type = _normalize_model_type(fallback_model_type)
+    if not normalized_fallback_type:
+        return False
+
+    text_config = config.get("text_config")
+    if not isinstance(text_config, dict):
+        return False
+
+    changed = False
+    for key, value in text_config.items():
+        if key not in config:
+            config[key] = value
+            changed = True
+
+    if _normalize_model_type(config.get("model_type")) != normalized_fallback_type:
+        config["model_type"] = normalized_fallback_type
+        changed = True
+
+    for section_key in ("text_config", "vision_config"):
+        section = config.get(section_key)
+        if not isinstance(section, dict):
+            continue
+
+        if _normalize_model_type(section.get("model_type")) != normalized_fallback_type:
+            section["model_type"] = normalized_fallback_type
+            changed = True
+
+    return changed
+
+
 def _resolve_mlx_model_module(models_module: Any, module_name: str) -> Optional[Any]:
     """Resolve an MLX-VLM model module from attributes or dynamic import."""
     module_object = getattr(models_module, module_name, None)
@@ -47,6 +93,11 @@ def _resolve_mlx_model_module(models_module: Any, module_name: str) -> Optional[
         return importlib.import_module(f"mlx_vlm.models.{module_name}")
     except Exception:
         return None
+
+
+def _has_native_qwen3_support(models_module: Any) -> bool:
+    """Return True when installed mlx_vlm includes native qwen3_vl module support."""
+    return _resolve_mlx_model_module(models_module, "qwen3_vl") is not None
 
 
 def _find_qwen2_fallback_module_name(models_module: Any) -> Optional[str]:
@@ -139,6 +190,27 @@ def _inject_qwen3_model_remapping(utils_module: Any, models_module: Any) -> bool
     return injected
 
 
+def _inject_qwen3_load_config_adapter(
+    utils_module: Any, fallback_model_type: str
+) -> bool:
+    """Patch mlx_vlm.utils.load_config to normalize qwen3 config for fallback loaders."""
+    if getattr(utils_module, "_retix_qwen3_load_config_patch", False):
+        return False
+
+    original_load_config = getattr(utils_module, "load_config", None)
+    if not callable(original_load_config):
+        return False
+
+    def _retix_wrapped_load_config(*args: Any, **kwargs: Any) -> Any:
+        config = original_load_config(*args, **kwargs)
+        _normalize_qwen3_config_for_qwen2_fallback(config, fallback_model_type)
+        return config
+
+    setattr(utils_module, "load_config", _retix_wrapped_load_config)
+    setattr(utils_module, "_retix_qwen3_load_config_patch", True)
+    return True
+
+
 def _ensure_mlx_loaded() -> bool:
     """
     Lazy-load MLX-VLM dependencies.
@@ -158,9 +230,18 @@ def _ensure_mlx_loaded() -> bool:
         from mlx_vlm import models as mlx_models
         from mlx_vlm import utils as mlx_utils
 
-        registry_injected = _inject_qwen3_registry_support(mlx_models)
-        remapping_injected = _inject_qwen3_model_remapping(mlx_utils, mlx_models)
-        if registry_injected or remapping_injected:
+        fallback_module_name = _find_qwen2_fallback_module_name(mlx_models)
+        registry_injected = False
+        remapping_injected = False
+        config_adapter_injected = False
+        if not _has_native_qwen3_support(mlx_models):
+            registry_injected = _inject_qwen3_registry_support(mlx_models)
+            remapping_injected = _inject_qwen3_model_remapping(mlx_utils, mlx_models)
+        if fallback_module_name is not None and not _has_native_qwen3_support(mlx_models):
+            config_adapter_injected = _inject_qwen3_load_config_adapter(
+                mlx_utils, fallback_module_name
+            )
+        if registry_injected or remapping_injected or config_adapter_injected:
             sys.stderr.write("[FIX] Injected qwen3_vl compatibility mapping into mlx_vlm\n")
             sys.stderr.flush()
         

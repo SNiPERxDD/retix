@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-04-07
+
+### Timestamp
+- 2026-04-07 05:29:20 UTC
+
+### Fixed
+- **Qwen3-VL Fallback Config Shape**: Added runtime config normalization so fallback Qwen2 loaders receive required root-level text fields when loading Qwen3-VL snapshots, eliminating `TextConfig.__init__()` missing-argument failures.
+- **Native Qwen3-VL Routing**: Compatibility remapping and config adapters are now skipped when `mlx_vlm` already exposes native `qwen3_vl` support, preventing architecture/weight mismatches from forced fallbacks.
+
+### Changed
+- **Version Bump**: Updated package and CLI metadata to v1.2.5.
+- **Dependency Floor**: Raised `mlx-vlm` minimum version to `>=0.4.4` in both package metadata and bootstrap dependencies.
+- **Test Coverage**: Added normalization, `load_config` adapter, and native-support detection regression tests for Qwen3 loading paths.
+
+### Files Modified
+1. `retix/inference.py` — Added Qwen3 config normalization, load_config adapter patching, and native-support-aware gating for compatibility injection.
+2. `tests/test_inference_registry.py` — Added tests for normalization, adapter behavior, and native-support detection.
+3. `pyproject.toml` — Bumped package version to 1.2.5.
+4. `retix/main.py` — Bumped CLI version string to 1.2.5.
+5. `retix/__init__.py` — Bumped package version string to 1.2.5.
+6. `retix/bootstrap.py` — Raised bootstrap dependency floor for `mlx-vlm`.
+7. `CHANGELOG.md` — This entry.
+
+### Validation
+- Full test suite passed: `42 passed, 4 skipped`.
+- Editable reinstall succeeded in runtime venv: `~/.cache/retix/venv`.
+- External runtime verification passed in `/Users/abhinavarao/DSE/Projects/AT-SDEP`:
+  `retix describe arena_size_200x200.png` completed successfully (model load + inference output).
+
 ## [1.2.4] - 2026-04-07
 
 ### Timestamp
