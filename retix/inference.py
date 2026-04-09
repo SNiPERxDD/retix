@@ -211,6 +211,114 @@ def _inject_qwen3_load_config_adapter(
     return True
 
 
+def _format_prompt_for_generation(processor: Any, prompt: str) -> str:
+    """Format prompt through a chat template when available, else use plain text.
+
+    Some vision processors (for example certain LFM variants) do not expose a chat
+    template on the processor itself, but do expose one on `processor.tokenizer`.
+    We prefer tokenizer chat-template formatting before falling back to an image-token
+    prompt format.
+    """
+    apply_chat_template = getattr(processor, "apply_chat_template", None)
+    tokenizer = getattr(processor, "tokenizer", None)
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image"},
+                {"type": "text", "text": prompt},
+            ],
+        }
+    ]
+
+    if not callable(apply_chat_template):
+        tokenizer_chat_template = getattr(tokenizer, "apply_chat_template", None)
+        if callable(tokenizer_chat_template):
+            try:
+                return tokenizer_chat_template(
+                    messages,
+                    add_generation_prompt=True,
+                    tokenize=False,
+                )
+            except Exception:
+                # Fall through to image-token fallback below.
+                pass
+
+        image_token = getattr(processor, "image_token", None)
+        if image_token is None and tokenizer is not None:
+            image_token = getattr(tokenizer, "image_token", None)
+
+        image_token = str(image_token or "<image>")
+        if image_token in prompt:
+            return prompt
+        return f"{image_token}\n{prompt}"
+
+    try:
+        return apply_chat_template(messages, add_generation_prompt=True)
+    except Exception as exc:
+        error_message = str(exc).lower()
+        if "does not have a chat template" in error_message:
+            tokenizer_chat_template = getattr(tokenizer, "apply_chat_template", None)
+            if callable(tokenizer_chat_template):
+                try:
+                    return tokenizer_chat_template(
+                        messages,
+                        add_generation_prompt=True,
+                        tokenize=False,
+                    )
+                except Exception:
+                    pass
+
+            image_token = getattr(processor, "image_token", None)
+            if image_token is None and tokenizer is not None:
+                image_token = getattr(tokenizer, "image_token", None)
+
+            image_token = str(image_token or "<image>")
+            sys.stderr.write(
+                "[WARN] Processor has no chat template; using image-token prompt fallback\n"
+            )
+            sys.stderr.flush()
+            if image_token in prompt:
+                return prompt
+            return f"{image_token}\n{prompt}"
+        raise
+
+
+def _should_retry_generation(output_text: str, generation_tokens: Any) -> bool:
+    """Return True when generation appears to have ended immediately without useful text."""
+    text_is_empty = len((output_text or "").strip()) == 0
+    try:
+        token_count = int(generation_tokens or 0)
+    except Exception:
+        token_count = 0
+    return text_is_empty and token_count <= 1
+
+
+def _build_retry_prompt(prompt: str) -> str:
+    """Build a deterministic retry prompt that nudges short non-empty output."""
+    return (
+        f"{prompt}\n\n"
+        "Respond with at least one short sentence that mentions visible text and UI elements."
+    )
+
+
+def _ensure_nonempty_output_text(output_text: str) -> Tuple[str, bool]:
+    """Guarantee non-empty user-facing output text.
+
+    Returns a tuple of (text, used_fallback_message).
+    """
+    normalized = (output_text or "").strip()
+    if normalized:
+        return output_text, False
+
+    fallback_text = (
+        "Model returned an empty response for this image. "
+        "Try rerunning or switch model with 'retix model switch 2b'."
+    )
+    return fallback_text, True
+
+
 def _ensure_mlx_loaded() -> bool:
     """
     Lazy-load MLX-VLM dependencies.
@@ -406,23 +514,11 @@ class VisionEngine:
             # Load the image (using optimized/downscaled path)
             image = Image.open(optimized_path).convert("RGB")
             
-            # Prepare message in chat format for Qwen3-VL
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image"},
-                        {"type": "text", "text": prompt}
-                    ]
-                }
-            ]
+            # Use chat-template formatting when supported, otherwise plain prompt.
+            formatted_prompt = _format_prompt_for_generation(processor, prompt)
             
-            # Apply chat template to get the formatted prompt
-            formatted_prompt = processor.apply_chat_template(
-                messages, 
-                add_generation_prompt=True
-            )
-            
+            retry_used = False
+
             # Run generation using MLX-VLM
             generation_result = mlx_vlm.generate(
                 model=model,
@@ -433,9 +529,35 @@ class VisionEngine:
                 temperature=temperature,
                 verbose=False
             )
+
+            if _should_retry_generation(
+                generation_result.text,
+                getattr(generation_result, "generation_tokens", 0),
+            ):
+                retry_used = True
+                sys.stderr.write(
+                    "[WARN] Empty generation detected; retrying once with fallback prompt\n"
+                )
+                sys.stderr.flush()
+
+                retry_prompt = _build_retry_prompt(prompt)
+                formatted_retry_prompt = _format_prompt_for_generation(
+                    processor, retry_prompt
+                )
+                generation_result = mlx_vlm.generate(
+                    model=model,
+                    processor=processor,
+                    image=image,
+                    prompt=formatted_retry_prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    verbose=False,
+                )
             
             # Extract text from GenerationResult
-            output_text = generation_result.text
+            output_text, used_empty_output_fallback = _ensure_nonempty_output_text(
+                generation_result.text
+            )
             
             inference_time = time.time() - inference_start
             sys.stderr.write(f"Inference completed in {inference_time:.2f}s\n")
@@ -468,6 +590,8 @@ class VisionEngine:
                 "generation_tokens": generation_result.generation_tokens,
                 "prompt_tps": generation_result.prompt_tps,
                 "generation_tps": generation_result.generation_tps,
+                "retry_used": retry_used,
+                "empty_output_fallback": used_empty_output_fallback,
             }
             
             result = create_description_result(output_text, metadata)

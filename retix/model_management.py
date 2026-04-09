@@ -28,6 +28,15 @@ def get_console():
 
 # Available vision models grouped by PRD v1.2 tiers.
 VISION_MODELS = {
+    "1.6b": {
+        "name": "LFM2.5-VL-1.6B",
+        "repo": "mlx-community/LFM2.5-VL-1.6B-4bit",
+        "vram_gb": 1.1,
+        "quantization": "4bit",
+        "tokens_per_second": 120,
+        "description": "Ultra-fast, but prone to high hallucination in dense UI/OCR tasks. Use only for general scene description.",
+        "recommended_for": "Fast UI navigation and element detection"
+    },
     "2b": {
         "name": "Qwen3-VL-2B-Instruct-4bit",
         "repo": "mlx-community/Qwen3-VL-2B-Instruct-4bit",
@@ -54,7 +63,7 @@ VISION_MODELS = {
         "tokens_per_second": 60,
         "description": "Lightweight profile for limited RAM systems",
         "recommended_for": "Lowest memory footprint",
-    },
+    }
 }
 
 

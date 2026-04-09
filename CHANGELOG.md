@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.2.7] - 2026-04-09
+
+### Timestamp
+- 2026-04-09 13:20:00 UTC
+
+### Fixed
+- **LFM2.5-VL Chat Template Failure**: Added a safe prompt formatting fallback path when `processor.apply_chat_template` is unavailable or raises a missing-template error. The fallback now keeps image/text counts aligned.
+- **Empty Describe Output on LFM2.5-VL**: Added a one-time retry path in inference when generation returns immediate-EOS with empty text, preventing blank `retix describe` output.
+- **Blank CLI Output Guard**: Added a final non-empty fallback message when model generation still returns empty text after retry, so `retix describe` never exits silently.
+- **Trimmed Benchmark Output Preview**: Restored Rich Panel display with cyan borders and enabled full-width rendering so benchmark output preview no longer truncates mid-sentence.
+- **Release Metadata Hygiene**: Removed machine-specific absolute paths from active release notes.
+
+### Changed
+- **Inference Robustness**: `run_inference` now routes prompt construction through a dedicated formatter that supports processor templates, tokenizer templates, and image-token fallback.
+- **Regression Coverage**: Added tests for template-supported, template-missing, and template-error fallback behavior.
+- **Benchmark Stability**: Updated benchmark token accounting to use inference metadata (`generation_tokens`, `prompt_tokens`, `generation_tps`) with a one-time retry when a model returns immediate-EOS output.
+- **Real Benchmarking Mode**: Increased benchmark `max_tokens` from 128 to 1024 for realistic throughput and decode measurements.
+- **Deterministic Benchmark Input Refresh**: Benchmark image is regenerated each run using the latest hard-scene template.
+- **Documentation**: Updated README benchmark notes and Python compatibility badge.
+
+### Files Modified
+1. `retix/benchmarking.py` — Benchmark token limit updates, output metrics display, and full-width preview panel behavior.
+2. `retix/inference.py` — Prompt formatting fallback and empty-output retry helpers.
+3. `retix/model_management.py` — Added the 1.6b model tier mapping.
+4. `tests/test_inference_registry.py` — Added inference fallback and retry coverage.
+5. `pyproject.toml` — Bumped package metadata to 1.2.7.
+6. `retix/main.py` — Bumped CLI version constant to 1.2.7.
+7. `retix/__init__.py` — Bumped package version constant to 1.2.7.
+8. `README.md` — Updated benchmark and compatibility docs.
+9. `.gitignore` — Added generated benchmark artifact ignore rule.
+10. `CHANGELOG.md` — This release entry.
+
+### Validation
+- Benchmark preview truncation fixed: 2b and 1.6b runs both show complete generated text in the cyan output panel.
+- Benchmark max token update verified: decode runs now use a 1024-token ceiling.
+- Bench image path verified: `~/.cache/retix/bench_test_image.png` (regenerated per run).
+- Runtime benchmark verification passed via CLI and direct benchmarking module calls.
+
 ## [1.2.6] - 2026-04-07
 
 ### Timestamp
@@ -27,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Validation
 - Full test suite passed: `42 passed, 4 skipped`.
 - Clean-environment dependency resolution succeeded with `pip install --dry-run -e .` in a fresh virtualenv.
-- External runtime verification passed in `/Users/abhinavarao/DSE/Projects/AT-SDEP`:
+- External runtime verification passed in a separate external workspace:
   `retix --version` reports `1.2.6`, and `retix describe arena_size_200x200.png` completed successfully.
 
 ## [1.2.5] - 2026-04-07
@@ -56,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Validation
 - Full test suite passed: `42 passed, 4 skipped`.
 - Editable reinstall succeeded in runtime venv: `~/.cache/retix/venv`.
-- External runtime verification passed in `/Users/abhinavarao/DSE/Projects/AT-SDEP`:
+- External runtime verification passed in a separate external workspace:
   `retix describe arena_size_200x200.png` completed successfully (model load + inference output).
 
 ## [1.2.4] - 2026-04-07

@@ -142,3 +142,6 @@ test.png
 .retix/
 archive/
 AGENTS.md
+
+# Generated benchmark artifacts
+benchmark_results.json

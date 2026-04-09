@@ -1,7 +1,7 @@
 # RETIX
 
 [![PyPI](https://img.shields.io/pypi/v/retix.svg?color=red)](https://pypi.org/project/retix/)
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://pypi.org/project/retix/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://pypi.org/project/retix/)
 [![License](https://img.shields.io/github/license/SNiPERxDD/retix.svg?color=green)](LICENSE)
 
 RETIX is a local-first vision CLI for agents that need to inspect screenshots, extract visible text, and verify visual claims with deterministic output. It is built around a simple idea: keep the workflow close to the codebase, keep the defaults predictable, and expose enough control for engineering use without forcing a heavier application layer.
@@ -129,6 +129,7 @@ If `uv` is installed, setup uses it for dependency installation and editable ins
 ```bash
 retix model list
 retix model info
+retix model switch 1.6b
 retix model switch 2b
 retix model switch 8b
 retix model switch moe
@@ -139,6 +140,16 @@ retix model switch moe
 ```bash
 retix bench
 ```
+
+`retix bench` now runs with a 1024-token generation ceiling so throughput reflects real decode workload rather than preview-only output.
+
+Benchmark output includes:
+
+- model identity
+- input and output token counts
+- a full-width cyan preview panel with the generated text
+
+The benchmark dashboard image is regenerated each run and saved to `~/.cache/retix/bench_test_image.png`.
 
 ### Daemon
 

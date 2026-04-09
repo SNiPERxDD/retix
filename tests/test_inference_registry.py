@@ -139,6 +139,11 @@ def test_has_native_qwen3_support_detects_missing_module(monkeypatch):
     models_module = SimpleNamespace()
 
     monkeypatch.delitem(sys.modules, "mlx_vlm.models.qwen3_vl", raising=False)
+    monkeypatch.setattr(
+        inference_module,
+        "_resolve_mlx_model_module",
+        lambda *_args, **_kwargs: None,
+    )
 
     assert inference_module._has_native_qwen3_support(models_module) is False
 
@@ -170,3 +175,121 @@ def test_inject_qwen3_registry_support_returns_false_without_fallback(monkeypatc
     injected = inference_module._inject_qwen3_registry_support(models_module)
 
     assert injected is False
+
+
+def test_format_prompt_for_generation_uses_template_when_available():
+    """Test prompt formatting uses processor chat template when supported."""
+    captured = {}
+
+    def _apply_chat_template(messages, add_generation_prompt):
+        captured["messages"] = messages
+        captured["add_generation_prompt"] = add_generation_prompt
+        return "formatted-template-prompt"
+
+    processor = SimpleNamespace(apply_chat_template=_apply_chat_template)
+
+    formatted = inference_module._format_prompt_for_generation(
+        processor, "describe this image"
+    )
+
+    assert formatted == "formatted-template-prompt"
+    assert captured["add_generation_prompt"] is True
+    assert captured["messages"][0]["content"][1]["text"] == "describe this image"
+
+
+def test_format_prompt_for_generation_falls_back_without_template_method():
+    """Test prompt formatting falls back to image-token prompt when template is unavailable."""
+    processor = SimpleNamespace(image_token="<image>")
+
+    formatted = inference_module._format_prompt_for_generation(
+        processor, "describe this image"
+    )
+
+    assert formatted == "<image>\ndescribe this image"
+
+
+def test_format_prompt_for_generation_uses_tokenizer_template_when_available():
+    """Test prompt formatting uses tokenizer chat template when processor lacks one."""
+    captured = {}
+
+    def _tokenizer_apply_chat_template(messages, add_generation_prompt, tokenize):
+        captured["messages"] = messages
+        captured["add_generation_prompt"] = add_generation_prompt
+        captured["tokenize"] = tokenize
+        return "formatted-tokenizer-template"
+
+    tokenizer = SimpleNamespace(apply_chat_template=_tokenizer_apply_chat_template)
+    processor = SimpleNamespace(tokenizer=tokenizer)
+
+    formatted = inference_module._format_prompt_for_generation(
+        processor, "describe this image"
+    )
+
+    assert formatted == "formatted-tokenizer-template"
+    assert captured["add_generation_prompt"] is True
+    assert captured["tokenize"] is False
+    assert captured["messages"][0]["content"][1]["text"] == "describe this image"
+
+
+def test_format_prompt_for_generation_handles_missing_template_error():
+    """Test prompt formatting falls back when processor raises missing-template error."""
+
+    def _apply_chat_template(messages, add_generation_prompt):
+        raise ValueError(
+            "Cannot use apply_chat_template because this processor does not have a chat template."
+        )
+
+    processor = SimpleNamespace(apply_chat_template=_apply_chat_template)
+
+    formatted = inference_module._format_prompt_for_generation(
+        processor, "describe this image"
+    )
+
+    assert formatted == "<image>\ndescribe this image"
+
+
+def test_format_prompt_for_generation_uses_existing_image_token_once():
+    """Test fallback does not duplicate image token if prompt already includes one."""
+    processor = SimpleNamespace(image_token="<image>")
+    prompt = "<image>\ndescribe this image"
+
+    formatted = inference_module._format_prompt_for_generation(processor, prompt)
+
+    assert formatted == prompt
+
+
+def test_should_retry_generation_for_empty_immediate_eos():
+    """Retry should trigger when output is empty and generation ended immediately."""
+    assert inference_module._should_retry_generation("", 1) is True
+    assert inference_module._should_retry_generation("   ", 0) is True
+
+
+def test_should_retry_generation_false_for_nonempty_output():
+    """Retry should not trigger when there is usable output text."""
+    assert inference_module._should_retry_generation("hello", 1) is False
+    assert inference_module._should_retry_generation("visible ui", 10) is False
+
+
+def test_build_retry_prompt_appends_instruction():
+    """Retry prompt should preserve original prompt and add a deterministic nudge."""
+    original = "Describe the screen"
+    retry_prompt = inference_module._build_retry_prompt(original)
+
+    assert "Describe the screen" in retry_prompt
+    assert "Respond with at least one short sentence" in retry_prompt
+
+
+def test_ensure_nonempty_output_text_passthrough_nonempty():
+    """Non-empty generation text should pass through unchanged."""
+    text, used_fallback = inference_module._ensure_nonempty_output_text("hello world")
+
+    assert text == "hello world"
+    assert used_fallback is False
+
+
+def test_ensure_nonempty_output_text_replaces_empty():
+    """Empty generation text should be replaced with a helpful fallback message."""
+    text, used_fallback = inference_module._ensure_nonempty_output_text("   ")
+
+    assert "Model returned an empty response" in text
+    assert used_fallback is True
